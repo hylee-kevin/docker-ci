@@ -5,36 +5,36 @@ on:
   push:
     branches:
       - 'master'
-      - 'main' # 'main' 브랜치를 사용하는 경우 추가
+      - 'main'
 
     tags:
       - 'v*.*'
       - 'v*.*.*'
 
 env:
-  DOCKER_IMAGE_NAME: dbgurum/nodejs-ci # Docker Hub 레포지토리 이름
+  DOCKER_IMAGE_NAME: dbgurum/nodejs-ci
 
 jobs:
   push:
     runs-on: ubuntu-latest
     permissions:
-      contents: read # `actions/checkout`을 위해 필요
-      packages: write # GitHub Container Registry(GHCR) 사용 시 필요
+      contents: read
+      packages: write
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4 # 레포지토리 코드를 체크아웃합니다.
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Git Tag 및 브랜치 정보를 정확히 가져오기 위해 전체 히스토리 가져오기
+          fetch-depth: 0
 
       - name: Extract Docker metadata (tags and labels)
-        id: docker_meta # 이 스텝의 ID
-        uses: docker/metadata-action@v5 # 최신 버전 사용 권장
+        id: docker_meta
+        uses: docker/metadata-action@v5
         with:
           images: ${{ env.DOCKER_IMAGE_NAME }}
           tags: |
             type=ref,event=tag
-            #type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' }}
 
       - name: Set up QEMU for multi-platform builds
         uses: docker/setup-qemu-action@v3 # 최신 버전 사용 권장
@@ -46,14 +46,13 @@ jobs:
         uses: docker/login-action@v3 # 최신 버전 사용 권장
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_PASSWORD }} # GitHub Secrets에 등록된 Docker Hub Personal Access Token
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
 
       - name: Build and push Docker Image
-        uses: docker/build-push-action@v5 # 최신 버전 사용 권장
+        uses: docker/build-push-action@v5
         with:
-          context: . # Dockerfile이 있는 디렉토리
-          platforms: linux/amd64 # 빌드할 플랫폼 지정 (선택 사항, 필요시 linux/arm64 등 추가)
+          context: . 
+          platforms: linux/amd64 
           push: true
-          tags: ${{ steps.docker_meta.outputs.tags }}   # docker_meta 액션에서 생성된 모든 태그 사용
-          labels: ${{ steps.docker_meta.outputs.labels }} # docker_meta 액션에서 생성된 모든 레이블 사용
-
+          tags: ${{ steps.docker_meta.outputs.tags }}   
+          labels: ${{ steps.docker_meta.outputs.labels }} 
